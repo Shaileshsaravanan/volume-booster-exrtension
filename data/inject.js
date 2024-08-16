@@ -13,37 +13,65 @@ const observe = () => {
   }
 
   const svgns = 'http://www.w3.org/2000/svg';
-  const settings = document.querySelector('.ytp-settings-button');
-  const boost = document.querySelector('.ytp-boost-button');
+  const settings = player.querySelector('.ytp-settings-button');
+  const boost = player.querySelector('.ytp-boost-button');
   if (settings && !boost) {
     observe.busy = true;
     chrome.storage.local.get({
-      'boost': 2
+      'boost': 2,
+      'position': '.ytp-settings-button'
     }, prefs => {
       const msg = `Boost volume NNx (%%)
 
-Use Shift + Click to adjust boosting level or assign keyboard shortcuts from the extensions manager`;
+- Use Shift + Click to adjust boosting level or assign keyboard shortcuts from the extensions manager
+- Use Meta + Click or Ctrl + Click to adjust button's position`;
       const boost = Object.assign(settings.cloneNode(true), {
         textContent: '',
         style: '',
         title: msg.replace('NN', prefs.boost).replace('%%', 'disabled')
       });
       boost.classList.replace('ytp-settings-button', 'ytp-boost-button');
+
       const svg = document.createElementNS(svgns, 'svg');
       svg.setAttribute('height', '100%');
       svg.setAttribute('version', '1.1');
-      svg.setAttribute('viewBox', '0 0 42 42');
+      svg.setAttribute('viewBox', '0 0 36 36');
+
+      const use = document.createElementNS(svgns, 'use');
+      use.setAttribute('class', 'ytp-svg-shadow');
+      use.setAttribute('href', '#ytp-bv-1');
+
+      const rect = document.createElementNS(svgns, 'rect');
+      rect.setAttribute('fill-opacity', '0.3');
+
+      const update = v => {
+        const wide = v.toString().includes('.');
+        rect.setAttribute('width', wide ? '24' : '18');
+        rect.setAttribute('x', wide ? '6' : '9');
+        text.textContent = v + 'x';
+      };
+
+      rect.setAttribute('y', '11.5');
+      rect.setAttribute('rx', '1.5');
+      rect.setAttribute('ry', '1.5');
+      rect.setAttribute('height', '13');
+      rect.setAttribute('id', 'ytp-bv-1');
       const text = document.createElementNS(svgns, 'text');
-      text.setAttribute('x', '21');
-      text.setAttribute('y', '21');
+      text.setAttribute('x', '18');
+      text.setAttribute('y', '18.5');
       text.setAttribute('dominant-baseline', 'middle');
       text.setAttribute('text-anchor', 'middle');
-      text.setAttribute('font-size', '14px');
-      text.textContent = prefs.boost + 'x';
+      update(prefs.boost);
 
-      svg.appendChild(text);
-      boost.appendChild(svg);
-      settings.parentNode.insertBefore(boost, settings);
+      svg.append(use, rect, text);
+      boost.append(svg);
+      const e = player.querySelector(prefs.position);
+      if (e) {
+        e.insertAdjacentElement('beforebegin', boost);
+      }
+      else {
+        settings.insertAdjacentElement('beforebegin', boost);
+      }
       observe.busy = false;
 
       boost.addEventListener('click', e => {
@@ -52,13 +80,15 @@ Use Shift + Click to adjust boosting level or assign keyboard shortcuts from the
 
         if (e.detail && e.detail.method === 'change-boost') {
           prefs.boost = e.detail.boost;
-          text.textContent = prefs.boost + 'x';
+          update(prefs.boost);
         }
 
         if (e.shiftKey) {
-          const v = prompt('Insert the new boosting level (2, 3, or 4)', prefs.boost)?.trim();
-          if (v === '2' || v === '3' || v === '4') {
-            prefs.boost = parseInt(v);
+          const v = prompt('Insert the new boosting level from 0 to 4 (e.g. 1.5)', prefs.boost)?.trim();
+          const vn = Math.round(parseFloat(v) * 10) / 10;
+
+          if (vn > 0 && vn <= 4) {
+            prefs.boost = vn;
             chrome.storage.local.set({
               boost: prefs.boost
             });
@@ -66,31 +96,47 @@ Use Shift + Click to adjust boosting level or assign keyboard shortcuts from the
               method: 'adjust_boost',
               boost: prefs.boost
             });
-            text.textContent = v + 'x';
+            update(vn);
           }
 
           return;
         }
-
-        if (boost.classList.contains('boosting')) {
-          chrome.runtime.sendMessage({
-            method: 'revoke_boost'
-          }, () => {
-            boost.classList.remove('boosting');
-            boost.title = msg.replace('NN', prefs.boost).replace('%%', 'disabled');
-          });
+        else if (e.metaKey || e.ctrlKey) {
+          const position = prompt(
+            'Move the button before the following button (e.g. .ytp-time-display)',
+            prefs.position
+          ) || '.ytp-settings-button';
+          if (position) {
+            const e = document.querySelector(position);
+            if (e) {
+              e.insertAdjacentElement('beforebegin', boost);
+              chrome.storage.local.set({
+                position
+              });
+            }
+          }
+          return;
         }
-        else {
+        // toggle on and off
+        if (rect.hasAttribute('fill-opacity')) { // disabled
           chrome.runtime.sendMessage({
             method: 'apply_boost'
           }, r => {
             if (r === true || r === 'true') {
-              boost.classList.add('boosting');
+              rect.removeAttribute('fill-opacity');
               boost.title = msg.replace('NN', prefs.boost).replace('%%', 'enabled');
             }
             else {
               alert('Cannot boost this video: ' + r);
             }
+          });
+        }
+        else { // enable
+          chrome.runtime.sendMessage({
+            method: 'revoke_boost'
+          }, () => {
+            rect.setAttribute('fill-opacity', '0.3');
+            boost.title = msg.replace('NN', prefs.boost).replace('%%', 'disabled');
           });
         }
       });
