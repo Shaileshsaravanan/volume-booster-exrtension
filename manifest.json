@@ -15,9 +15,20 @@
   },
   "content_scripts": [{
     "matches": ["*://www.youtube.com/*"],
-    "js": ["data/inject.js"],
-    "css": ["data/inject.css"],
+    "js": ["/data/inject.js"],
+    "css": ["/data/inject.css"],
     "run_at": "document_start",
     "all_frames": true
-  }]
+  }],
+  "commands": {
+    "boost-2x": {
+      "description": "toggle and adjust 2x boosting"
+    },
+    "boost-3x": {
+      "description": "toggle and adjust 3x boosting"
+    },
+    "boost-4x": {
+      "description": "toggle and adjust 4x boosting"
+    }
+  }
 }
