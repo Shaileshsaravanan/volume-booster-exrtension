@@ -2,14 +2,27 @@ import { defineManifest } from "@crxjs/vite-plugin";
 // @ts-ignore
 import packageJson from "./package.json";
 
-const { version, name } = packageJson;
+const { version, name, description } = packageJson;
 
 export default defineManifest(async (env) => ({
-  name: env.mode === "staging" ? `[INTERNAL] ${name}` : name,
+  manifest_version: 3,
+  name: env.command === "serve" ? `[DEV] ${name}` : name,
   version: version,
   version_name: version,
-  manifest_version: 3,
+  description: description,
+  icons: {
+    16: "icons/icon16.png",
+    32: "icons/icon32.png",
+    48: "icons/icon48.png",
+    128: "icons/icon128.png",
+  },
   action: {
+    default_icon: {
+      16: "icons/icon16.png",
+      32: "icons/icon32.png",
+      48: "icons/icon48.png",
+      128: "icons/icon128.png",
+    },
     default_popup: "src/popup/popup.html",
   },
   background: {
@@ -21,7 +34,6 @@ export default defineManifest(async (env) => ({
       matches: ["*://*/*"],
     },
   ],
-  host_permissions: ["*://*/*"],
   options_page: "src/options/index.html",
   permissions: ["storage", "activeTab"],
   web_accessible_resources: [
