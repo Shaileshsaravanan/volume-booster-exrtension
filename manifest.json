@@ -1,34 +1,28 @@
 {
-  "name": "Volume Booster",
-  "description": "Increase volume, beyond the maximum level, in youtube.",
-  "version": "0.1.0",
-  "manifest_version": 3,
-  "permissions": [
-    "storage",
-    "scripting"
-  ],
-  "host_permissions": [
-    "*://www.youtube.com/*"
-  ],
-  "background": {
-    "service_worker": "worker.js"
+  "background": { "service_worker": "js/background.js" },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png",
+      "300": "icons/icon300.png"
+    },
+    "default_title": "Volume Booster"
   },
-  "content_scripts": [{
-    "matches": ["*://www.youtube.com/*"],
-    "js": ["/data/inject.js"],
-    "css": ["/data/inject.css"],
-    "run_at": "document_start",
-    "all_frames": true
-  }],
-  "commands": {
-    "boost-2x": {
-      "description": "toggle and adjust 2x boosting"
-    },
-    "boost-3x": {
-      "description": "toggle and adjust 3x boosting"
-    },
-    "boost-4x": {
-      "description": "toggle and adjust 4x boosting"
-    }
-  }
+  "default_locale": "en",
+  "description": "Volume Booster helps boost video or music volume sound! Increase volume and bass booster, equalizer. Volume control",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png",
+    "300": "icons/icon300.png"
+  },
+  "incognito": "split",
+  "manifest_version": 3,
+  "minimum_chrome_version": "102",
+  "name": "__MSG_extName__",
+  "permissions": ["tabCapture", "storage", "system.display", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "short_name": "Volume Booster",
+  "version": "1.0.0"
 }
